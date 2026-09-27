@@ -1,0 +1,16 @@
+{# One cart line. script.js builds the same structure in buildCartRow(). #}
+<li class="cart-row" data-item-id="{{ item.id }}">
+    <img src="{{ item.image_url }}" alt="">
+    <div class="cart-row-info">
+        <a class="name" href="/product/{{ item.product_id }}">{{ item.name }}</a>
+        <p class="meta">{{ item.unit_price | inr }} each · Seller {{ item.seller_username }}</p>
+        {% if item.problem %}<p class="problem">{{ item.problem }}</p>{% endif %}
+    </div>
+    <div class="qty-control">
+        <button type="button" data-action="decrease" aria-label="Decrease quantity" {{ 'disabled' if item.quantity <= 1 }}>−</button>
+        <input type="number" min="1" max="{{ [item.available, 1] | max }}" value="{{ item.quantity }}" aria-label="Quantity">
+        <button type="button" data-action="increase" aria-label="Increase quantity" {{ 'disabled' if item.quantity >= item.available }}>+</button>
+    </div>
+    <p class="line-total">{{ item.line_total | inr }}</p>
+    <button type="button" class="link-btn" data-action="remove">Remove</button>
+</li>

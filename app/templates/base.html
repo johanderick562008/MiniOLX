@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {# JavaScript reads this to send the CSRF header. Empty when logged out. #}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <meta name="theme-color" content="#0f5e4c">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="{{ url_for('static', path='icons/favicon.svg') }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='icons/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', path='site.webmanifest') }}">
+    <title>{% block title %}mini olx · Buy and sell used stuff nearby{% endblock %}</title>
+    <link rel="preload" href="{{ url_for('static', path='fonts/plus-jakarta-sans-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="{{ url_for('static', path='fonts/inter-latin-wght-normal.woff2') }}" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/style.css') }}">
+</head>
+<body>
+    <div class="demo-strip" role="note">
+        {{ icon("info", 16) }}
+        <span><strong>Learning/Demo Project:</strong> Payments are handled using a manually verified UPI QR workflow. This website does not automatically verify external UPI transactions.</span>
+    </div>
+
+    <header class="site-header">
+        <div class="container">
+            <nav class="nav" aria-label="Main">
+                <a class="brand" href="/" aria-label="mini olx home">mini <span class="olx">olx</span><span class="dot" aria-hidden="true"></span></a>
+
+                <form class="nav-search" action="/" method="get" role="search">
+                    {{ icon("search") }}
+                    <input type="search" name="search" placeholder="Search for anything in electronics, books, accessories…"
+                           aria-label="Search listings" maxlength="100">
+                </form>
+
+                <div class="nav-links">
+                    {% if user %}
+                        <a class="nav-link" href="/cart">{{ icon("shopping_bag") }}<span><span class="label">Cart </span>(<span id="cart-count">{{ cart_count }}</span>)</span></a>
+                        <a class="nav-link nav-orders" href="/orders" aria-label="Orders">{{ icon("receipt_long") }}<span class="label">Orders</span></a>
+                        <a class="nav-link" href="/seller/orders" aria-label="Sales">{{ icon("storefront") }}<span class="label">Sales</span>{% if sales_pending %} <span class="count-badge" title="Payments to verify">{{ sales_pending }}</span>{% endif %}</a>
+                        <a class="btn btn-primary btn-sell" href="/products/add">{{ icon("add_circle", 18) }}<span class="label">Sell an item</span></a>
+                        <div class="user-chip">
+                            <a class="avatar" href="/dashboard" title="Your dashboard">{{ user.username[:1] }}</a>
+                            <div>
+                                <a class="name" href="/dashboard">{{ user.username }}</a>
+                                <button type="button" class="logout-btn" id="logout-btn">Log out</button>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a class="nav-link" href="/login">{{ icon("login", 18) }}<span class="label">Log in</span></a>
+                        <a class="btn btn-primary btn-sm" href="/register">Create account</a>
+                    {% endif %}
+                </div>
+            </nav>
+            <form class="mobile-search" action="/" method="get" role="search">
+                <div class="nav-search">
+                    {{ icon("search") }}
+                    <input type="search" name="search" placeholder="Search listings" aria-label="Search listings" maxlength="100">
+                </div>
+            </form>
+        </div>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-top">
+                <div>
+                    <a class="brand" href="/">mini <span class="olx">olx</span><span class="dot" aria-hidden="true"></span></a>
+                    <p>Peer-to-peer Indian marketplace built with transparency.</p>
+                </div>
+                <nav class="footer-links" aria-label="Footer">
+                    <a href="/">Browse listings</a>
+                    <a href="/products/add">Sell an item</a>
+                    <a href="/orders">My orders</a>
+                    <a href="/settings/payment">UPI payment settings</a>
+                </nav>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 mini olx · A learning project, not for commercial use.</span>
+                <span>UPI payments verified by sellers</span>
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+    <script src="{{ url_for('static', path='js/script.js') }}"></script>
+</body>
+</html>

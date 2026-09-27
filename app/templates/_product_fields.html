@@ -1,0 +1,98 @@
+{# Shared by add_product.html and edit_product.html. `product` is undefined when adding. #}
+<div class="section">
+    <div class="section-title">
+        <h2>Photo of the item</h2>
+        <span class="small muted">{{ 'Leave empty to keep the current photo' if product else '1 clear photo' }}</span>
+    </div>
+    <div class="photo-grid">
+        <div class="photo-preview">
+            {% if product %}<span class="pill">{{ icon("star", 12) }} Primary photo</span>{% endif %}
+            <img id="image-preview" alt="Photo preview" {% if product %}src="{{ product.image_url }}"{% else %}hidden{% endif %}>
+            <span class="empty-photo" id="image-empty" {% if product %}hidden{% endif %}>{{ icon("photo_camera", 32) }}</span>
+        </div>
+        <label class="dropzone" id="dropzone">
+            <input name="image" type="file" accept="image/jpeg,image/png,image/webp" {{ '' if product else 'required' }}>
+            <span class="drop-icon">{{ icon("photo_camera", 22) }}</span>
+            <span class="drop-title">Drag and drop your photo here</span>
+            <span>or <span class="drop-browse">Browse files</span></span>
+            <span class="small muted">JPG, PNG or WEBP · Up to 2 MB</span>
+        </label>
+    </div>
+</div>
+
+<label class="field">
+    <span class="field-label">Product title <span class="hint">Max 120 characters</span></span>
+    <input name="name" required maxlength="120" placeholder="e.g. Keychron K6 Wireless Mechanical Keyboard"
+           value="{{ product.name if product else '' }}">
+</label>
+
+<div class="field-row">
+    <label class="field">
+        <span class="field-label">Category</span>
+        <select name="category" required>
+            {% for value, label in CATEGORY_LABELS.items() %}
+                <option value="{{ value }}" {{ 'selected' if product and product.category == value }}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </label>
+    <div class="field">
+        <span class="field-label">Available quantity {% if product %}<span class="hint">0 = sold out</span>{% endif %}</span>
+        <div class="stepper" data-stepper>
+            <button type="button" data-step="-1" aria-label="Decrease quantity">{{ icon("remove", 18) }}</button>
+            <input name="quantity" type="number" required min="{{ 0 if product else 1 }}" max="999" step="1"
+                   value="{{ product.quantity if product else 1 }}" aria-label="Available quantity">
+            <button type="button" data-step="1" aria-label="Increase quantity">{{ icon("add", 18) }}</button>
+        </div>
+    </div>
+</div>
+
+<fieldset class="field" style="border:0;padding:0;margin-inline:0">
+    <legend class="field-label">Item condition</legend>
+    <div class="option-cards option-cards-4">
+        {% set descriptions = {
+            "new": "Unopened, unused, with original packaging.",
+            "like_new": "Used a few times, flawless cosmetic state.",
+            "good": "Light signs of careful daily use.",
+            "used": "Visible wear, works perfectly.",
+        } %}
+        {% for value, label in CONDITION_LABELS.items() %}
+            <label class="option-card">
+                <input type="radio" name="condition" value="{{ value }}" required
+                       {{ 'checked' if (product and product.condition == value) or (not product and loop.first) }}>
+                <span class="option-title">{{ label }} <span class="option-check">{{ icon("check_circle", 18) }}</span></span>
+                <span class="option-text">{{ descriptions[value] }}</span>
+            </label>
+        {% endfor %}
+    </div>
+</fieldset>
+
+<label class="field">
+    <span class="field-label">Selling price</span>
+    <span class="affix affix-price">
+        <span class="affix-text">₹</span>
+        <input name="price" type="number" required min="1" max="1000000" step="0.01" placeholder="4,850"
+               value="{{ product.price if product else '' }}">
+    </span>
+    <span class="field-help">{{ icon("info", 14) }} Buyers pay this amount directly to your UPI ID.</span>
+</label>
+
+<label class="field">
+    <span class="field-label">Detailed description <span class="hint">Max 2000 characters</span></span>
+    <textarea name="description" required maxlength="2000" rows="5"
+              placeholder="Brand, model, age, what's included, any wear or defects…">{{ product.description if product else '' }}</textarea>
+    <span class="field-help">{{ icon("lightbulb", 14) }} Tip: mention when you bought it, the bill, and accessories. It helps you sell faster.</span>
+</label>
+
+<div class="upi-box">
+    <h3>{{ icon("account_balance_wallet", 20) }} UPI ID for receiving payment</h3>
+    <div class="upi-value">
+        <span>{{ icon("qr_code_2", 18) }} {{ user.upi_id or "Not set yet" }}</span>
+        <a href="/settings/payment" class="small">Change</a>
+    </div>
+    <p class="field-help">{{ icon("info", 14) }} Buyers scan a QR code for this UPI ID after placing an order. You then verify each payment in Sales.</p>
+</div>
+
+<label class="check-row">
+    <input type="checkbox" required>
+    <span>I confirm this is a genuine item in the condition described, and I can hand it over to the buyer.</span>
+</label>

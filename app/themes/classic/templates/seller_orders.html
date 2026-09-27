@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Sales · Mini OLX{% endblock %}
+{% block content %}
+<h1>Sales</h1>
+
+<nav class="tabs" aria-label="Filter sales">
+    <a href="/seller/orders?show=pending" {% if show == "pending" %}aria-current="page"{% endif %}>
+        Needs verification{% if sales_pending %} ({{ sales_pending }}){% endif %}</a>
+    <a href="/seller/orders?show=all" {% if show != "pending" %}aria-current="page"{% endif %}>All sales</a>
+</nav>
+
+<div class="message" id="form-message" hidden></div>
+
+{% if orders %}
+<ul class="order-list" id="seller-orders">
+    {% for order in orders %}
+    {% set payment = order.latest_payment %}
+    <li class="order-card">
+        <div class="order-card-head">
+            <span class="order-number">{{ order.order_number }}</span>
+            <span class="meta">{{ order.created_at.strftime("%d %b %Y, %I:%M %p") }} UTC</span>
+        </div>
+        <p class="meta">Buyer: {{ order.buyer.username }}</p>
+
+        <ul class="order-lines">
+            {% for item in order.items %}
+                <li><span>{{ item.product_name }} × {{ item.quantity }}</span><span>{{ item.line_total | inr }}</span></li>
+            {% endfor %}
+        </ul>
+
+        <dl class="status-row">
+            <dt>Amount</dt><dd class="price">{{ order.total_amount | inr }}</dd>
+            <dt>Transaction ref.</dt><dd>{{ payment.transaction_reference if payment else "—" }}</dd>
+            <dt>Payment</dt><dd>{{ order.payment_status_label }}{{ " (Razorpay)" if order.payment_method == "razorpay" else "" }}</dd>
+            <dt>Order</dt><dd><span class="status status-{{ order.status }}">{{ order.status_label }}</span></dd>
+        </dl>
+
+        {% if payment and payment.status == "pending" %}
+            <div class="verify-box">
+                <p>Open <strong>your</strong> UPI app{% if order.payee_upi_id %} ({{ order.payee_upi_id }}){% endif %}
+                   and look for <strong>{{ payment.amount | inr }}</strong>
+                   with reference <strong>{{ payment.transaction_reference }}</strong>. Verify only if that money has arrived.</p>
+                <div class="actions">
+                    <button type="button" class="btn btn-primary" data-action="verify"
+                            data-payment-id="{{ payment.id }}" data-amount="{{ payment.amount | inr }}"
+                            data-reference="{{ payment.transaction_reference }}">Verify payment</button>
+                    <button type="button" class="btn btn-danger" data-action="reject"
+                            data-payment-id="{{ payment.id }}">Reject payment</button>
+                </div>
+            </div>
+        {% elif order.status == "paid" %}
+            <div class="actions"><button type="button" class="btn btn-quiet" data-action="status"
+                data-order-id="{{ order.id }}" data-status="processing">Mark as processing</button></div>
+        {% elif order.status == "processing" %}
+            <div class="actions"><button type="button" class="btn btn-quiet" data-action="status"
+                data-order-id="{{ order.id }}" data-status="completed">Mark as completed</button></div>
+        {% endif %}
+
+        {# The buyer's address and phone are shown only after the money is verified. #}
+        {% if order.status in ("paid", "processing", "completed") %}
+            <details class="ship-to" open>
+                <summary>Deliver to</summary>
+                <p class="address">{{ order.shipping_name }}<br>{{ order.address }}<br>
+                   {{ order.city }}, {{ order.state }} {{ order.pincode }}<br>Phone: {{ order.phone }}</p>
+            </details>
+        {% endif %}
+
+        {% if order.payments | length > 1 %}
+            <details class="ship-to">
+                <summary>Payment history ({{ order.payments | length }} attempts)</summary>
+                <ul class="order-lines">
+                    {% for p in order.payments %}
+                        <li><span>{{ p.transaction_reference }}</span><span>{{ p.status_label }}</span></li>
+                    {% endfor %}
+                </ul>
+            </details>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+    <div class="empty">
+        {% if show == "pending" %}
+            <p>No payments waiting for verification.</p>
+            <a class="btn btn-quiet" href="/seller/orders?show=all">See all sales</a>
+        {% else %}
+            <p>Nobody has bought your items yet.</p>
+            <a class="btn btn-primary" href="/products/add">Sell an item</a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

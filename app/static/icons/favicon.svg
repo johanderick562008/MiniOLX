@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>mini olx</title>
+  <rect width="64" height="64" rx="15" fill="#0f5e4c"/>
+  <path d="M15 47V33a8.5 8.5 0 0 1 17 0v14M32 33a8.5 8.5 0 0 1 17 0v14"
+        fill="none" stroke="#fff" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="50" cy="14" r="6" fill="#e8a317"/>
+</svg>

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} · Mini OLX{% endblock %}
+{% block content %}
+<article class="product-detail">
+    <img class="product-photo" src="{{ product.image_url }}" alt="{{ product.name }}">
+
+    <div class="product-info">
+        <p class="meta">{{ CATEGORY_LABELS[product.category] }}</p>
+        <h1>{{ product.name }}</h1>
+        <p class="price price-large">{{ product.price | inr }}</p>
+
+        <dl class="facts">
+            <dt>Condition</dt><dd>{{ CONDITION_LABELS[product.condition] }}</dd>
+            <dt>Available</dt><dd>{{ product.quantity if product.in_stock else "Sold out" }}</dd>
+            <dt>Seller</dt><dd>{{ product.seller.username }}</dd>
+            <dt>Listed</dt><dd>{{ product.created_at.strftime("%d %b %Y") }}</dd>
+        </dl>
+
+        <div class="message" id="form-message" hidden></div>
+
+        {% if is_owner %}
+            <p class="note">This is your listing.</p>
+            <div class="actions">
+                <a class="btn btn-primary" href="/products/{{ product.id }}/edit">Edit listing</a>
+                <button type="button" class="btn btn-danger" id="delete-product-btn"
+                        data-product-id="{{ product.id }}">Delete listing</button>
+            </div>
+        {% elif not user %}
+            <a class="btn btn-primary" href="/login">Log in to buy</a>
+        {% elif product.in_stock %}
+            <form class="buy-box" id="add-to-cart-form" data-product-id="{{ product.id }}" novalidate>
+                <label class="qty-label">Quantity
+                    <input name="quantity" type="number" min="1" max="{{ [product.quantity, 99] | min }}" step="1" value="1">
+                </label>
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">Add to cart</button>
+                    <button type="button" class="btn btn-quiet" id="buy-now-btn">Buy now</button>
+                </div>
+            </form>
+        {% else %}
+            <p class="note">This item is sold out.</p>
+        {% endif %}
+
+        <h2>Description</h2>
+        <p class="description">{{ product.description }}</p>
+    </div>
+</article>
+{% endblock %}

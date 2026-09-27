@@ -1,0 +1,20 @@
+{# One listing card. script.js builds the same structure in buildCard(). #}
+<a class="product-card" href="/product/{{ product.id }}">
+    <div class="media">
+        <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy">
+        <span class="pill pill-white">{{ product.condition_label }}</span>
+    </div>
+    <div class="body">
+        <div class="price-row">
+            <span class="price">{{ product.price | inr }}</span>
+            <span class="pill pill-mint">{{ product.category_label }}</span>
+        </div>
+        <h3>{{ product.name }}</h3>
+        <p class="desc">{{ product.description }}</p>
+        <div class="meta">
+            <span class="who">{{ icon("person", 14) }}<strong>{{ product.seller.username }}</strong></span>
+            <time datetime="{{ product.created_at.isoformat() }}Z">{{ product.created_at | ago }}</time>
+        </div>
+        <span class="view">View product {{ icon("arrow_forward", 18) }}</span>
+    </div>
+</a>

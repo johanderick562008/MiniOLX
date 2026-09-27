@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Create account · mini olx{% endblock %}
+{% block content %}
+<section class="card auth-wrap">
+    {% include "_auth_aside.html" %}
+    <div class="auth-form">
+        <h1>Create your account</h1>
+        <p class="sub">It takes a minute. You can also sign up with Google.</p>
+        <div class="message" id="form-message" hidden></div>
+
+        {% include "_google_button.html" %}
+
+        <form id="register-form" novalidate>
+            <label class="field">
+                <span class="field-label">Full name</span>
+                <input name="name" autocomplete="name" required maxlength="100">
+            </label>
+            <label class="field">
+                <span class="field-label">Email</span>
+                <input name="email" type="email" autocomplete="email" required maxlength="255">
+            </label>
+            <label class="field">
+                <span class="field-label">Username <span class="hint">3–30 letters, numbers or _</span></span>
+                <input name="username" autocomplete="username" required pattern="[A-Za-z0-9_]{3,30}">
+            </label>
+            <div class="field-row">
+                <label class="field">
+                    <span class="field-label">Password</span>
+                    <input name="password" type="password" autocomplete="new-password" required minlength="8">
+                </label>
+                <label class="field">
+                    <span class="field-label">Confirm password</span>
+                    <input name="confirm_password" type="password" autocomplete="new-password" required>
+                </label>
+            </div>
+            <p class="field-help" style="margin:-0.5rem 0 1.1rem">{{ icon("info", 14) }} At least 8 characters, with a letter and a number.</p>
+            <button class="btn btn-primary btn-lg btn-block" type="submit">Create account</button>
+        </form>
+        <p class="auth-switch">Already have an account? <a href="/login">Log in</a></p>
+    </div>
+</section>
+{% endblock %}

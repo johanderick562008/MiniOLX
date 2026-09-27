@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}My orders · Mini OLX{% endblock %}
+{% block content %}
+<h1>My orders</h1>
+
+{% if placed %}
+    <div class="message success">{{ placed }} orders placed, one per seller. Use <strong>Pay now</strong> on each to complete your purchase.</div>
+{% endif %}
+
+{% if orders %}
+    <ul class="order-list">
+        {% for order in orders %}
+            <li class="order-card">
+                <div class="order-card-head">
+                    <a class="order-number" href="/orders/{{ order.id }}">{{ order.order_number }}</a>
+                    <span class="meta">{{ order.created_at.strftime("%d %b %Y, %I:%M %p") }} UTC</span>
+                </div>
+                <ul class="order-lines">
+                    {% for item in order.items %}
+                        <li><span>{{ item.product_name }} × {{ item.quantity }}</span><span>{{ item.line_total | inr }}</span></li>
+                    {% endfor %}
+                </ul>
+                <div class="order-card-foot">
+                    <span>Seller: {{ order.seller.username }}</span>
+                    <span class="price">{{ order.total_amount | inr }}</span>
+                </div>
+                <dl class="status-row">
+                    <dt>Payment</dt>
+                    <dd>{{ order.payment_status_label }}
+                        {% if order.status == "pending_payment" and (not order.latest_payment or order.latest_payment.status == "rejected") %}
+                            · <a href="/payment/{{ order.id }}">Pay now</a>
+                        {% endif %}
+                    </dd>
+                    <dt>Order</dt>
+                    <dd><span class="status status-{{ order.status }}">{{ order.status_label }}</span></dd>
+                </dl>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <div class="empty">
+        <p>You haven't placed any orders yet.</p>
+        <a class="btn btn-primary" href="/">Browse listings</a>
+    </div>
+{% endif %}
+{% endblock %}

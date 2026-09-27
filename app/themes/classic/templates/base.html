@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {# JavaScript reads this to send the CSRF header. Empty when logged out. #}
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="{{ url_for('static', path='icons/favicon.svg') }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='icons/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', path='site.webmanifest') }}">
+    <meta name="theme-color" content="#0f5e4c">
+    <title>{% block title %}Mini OLX{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='classic/style.css') }}">
+</head>
+<body>
+    <div class="demo-strip" role="note">
+        <strong>Learning/Demo Project:</strong> Payments are handled using a manually verified UPI QR workflow.
+        This website does not automatically verify external UPI transactions.
+    </div>
+
+    <header class="site-header">
+        <nav class="nav container">
+            <a class="logo" href="/">mini<span>olx</span></a>
+            {% block header_search %}
+            <form class="nav-search" action="/" method="get" role="search">
+                <input type="search" name="search" placeholder="Search listings" aria-label="Search listings" maxlength="100">
+            </form>
+            {% endblock %}
+            <div class="nav-links">
+                {% if user %}
+                    <a class="btn btn-primary" href="/products/add">Sell an item</a>
+                    <a class="cart-link" href="/cart">Cart <span class="badge" id="cart-count">{{ cart_count }}</span></a>
+                    <a href="/orders">Orders</a>
+                    <a class="cart-link" href="/seller/orders">Sales{% if sales_pending %} <span class="badge badge-alert" title="Payments to verify">{{ sales_pending }}</span>{% endif %}</a>
+                    <a href="/dashboard">{{ user.username }}</a>
+                    <button type="button" class="btn btn-quiet" id="logout-btn">Log out</button>
+                {% else %}
+                    <a href="/login">Log in</a>
+                    <a class="btn btn-primary" href="/register">Create account</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    {% block scripts %}{% endblock %}
+    <script src="{{ url_for('static', path='classic/script.js') }}"></script>
+</body>
+</html>

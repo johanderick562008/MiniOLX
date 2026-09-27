@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{# The homepage has its own, bigger search form, so hide the header one. #}
+{% block header_search %}{% endblock %}
+{% block content %}
+<section class="hero">
+    <h1>Buy and sell used stuff with people nearby.</h1>
+    {% if not user %}
+        <p>Create an account to list your own items.</p>
+    {% endif %}
+</section>
+
+{# A normal GET form: works without JavaScript, and every search has a
+   shareable URL like /?search=keyboard&max_price=3000. script.js upgrades
+   it to live results using the JSON API. #}
+<form id="filter-form" class="filters" action="/" method="get" role="search">
+    <input class="filter-search" type="search" name="search" maxlength="100"
+           placeholder="Search keyboards, books, bags…" aria-label="Search"
+           value="{{ filters.search or '' }}">
+
+    <select name="category" aria-label="Category">
+        <option value="">All categories</option>
+        {% for value, label in CATEGORY_LABELS.items() %}
+            <option value="{{ value }}" {{ 'selected' if filters.category and filters.category.value == value }}>{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <select name="condition" aria-label="Condition">
+        <option value="">Any condition</option>
+        {% for value, label in CONDITION_LABELS.items() %}
+            <option value="{{ value }}" {{ 'selected' if filters.condition and filters.condition.value == value }}>{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <div class="price-range">
+        <input name="min_price" type="number" min="0" step="1" placeholder="Min ₹" aria-label="Minimum price"
+               value="{{ filters.min_price if filters.min_price is not none else '' }}">
+        <span aria-hidden="true">to</span>
+        <input name="max_price" type="number" min="0" step="1" placeholder="Max ₹" aria-label="Maximum price"
+               value="{{ filters.max_price if filters.max_price is not none else '' }}">
+    </div>
+
+    <select name="sort" aria-label="Sort">
+        {% for value, label in sort_labels.items() %}
+            <option value="{{ value }}" {{ 'selected' if filters.sort and filters.sort.value == value }}>{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <button class="btn btn-primary" type="submit">Search</button>
+    <a class="clear-link" href="/">Clear</a>
+</form>
+
+<div class="message error" id="filter-message" {% if not filter_error %}hidden{% endif %}>{{ filter_error or '' }}</div>
+
+<p class="result-count" id="result-count">
+    {{ products | length }} item{{ '' if products | length == 1 else 's' }}{{ ' found' if filters.is_active else '' }}
+</p>
+
+<div class="product-grid" id="product-grid">
+    {% for product in products %}
+        {% include "_product_card.html" %}
+    {% endfor %}
+</div>
+
+<div class="empty" id="empty-state" {% if products %}hidden{% endif %}>
+    {% if filters.is_active %}
+        <p>No items match these filters.</p>
+        <a class="btn btn-quiet" href="/">Clear filters</a>
+    {% else %}
+        <p>Nothing is listed yet.</p>
+        <a class="btn btn-primary" href="{{ '/products/add' if user else '/register' }}">List the first item</a>
+    {% endif %}
+</div>
+{% endblock %}

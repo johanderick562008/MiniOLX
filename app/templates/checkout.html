@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Checkout · mini olx{% endblock %}
+{% block content %}
+<div class="page-bar">
+    <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/cart">{{ icon("arrow_back", 16) }} Cart</a> <span>/</span> <span class="current">Secure checkout</span>
+    </nav>
+    <span class="pill pill-grey">{{ icon("lock", 14) }} Stock is reserved when you order</span>
+</div>
+
+<div class="message" id="form-message" hidden></div>
+{% if not cart.can_checkout %}
+    <div class="message error">{{ icon("error", 18) }} <span>Some items in your cart need attention. <a href="/cart">Review your cart</a> before checking out.</span></div>
+{% endif %}
+
+<form class="shell" id="checkout-form" novalidate>
+    <div class="shell-main">
+        <section class="card card-pad">
+            <div class="step-head">
+                <span class="step-icon">{{ icon("local_shipping", 22) }}</span>
+                <div><h2>1. Delivery address</h2><p>Where the seller should hand over or send your item</p></div>
+            </div>
+            <div class="field-row">
+                <label class="field">
+                    <span class="field-label">Full name</span>
+                    <input name="shipping_name" autocomplete="name" required maxlength="100"
+                           value="{{ previous.shipping_name if previous else user.name }}">
+                </label>
+                <label class="field">
+                    <span class="field-label">Mobile number</span>
+                    <input name="phone" type="tel" autocomplete="tel" required maxlength="20" placeholder="98765 43210"
+                           value="{{ previous.phone if previous else '' }}">
+                </label>
+            </div>
+            <label class="field">
+                <span class="field-label">Address</span>
+                <textarea name="address" autocomplete="street-address" required maxlength="255" rows="2"
+                          style="min-height:72px" placeholder="Flat, building, street, area">{{ previous.address if previous else '' }}</textarea>
+            </label>
+            <div class="field-row">
+                <label class="field">
+                    <span class="field-label">City</span>
+                    <input name="city" autocomplete="address-level2" required maxlength="100"
+                           value="{{ previous.city if previous else '' }}">
+                </label>
+                <label class="field">
+                    <span class="field-label">Pincode</span>
+                    <input name="pincode" inputmode="numeric" autocomplete="postal-code" required maxlength="6"
+                           value="{{ previous.pincode if previous else '' }}">
+                </label>
+            </div>
+            <label class="field" style="margin-bottom:0">
+                <span class="field-label">State</span>
+                <select name="state" required>
+                    <option value="">Choose a state</option>
+                    {% for state in states %}
+                        <option {{ 'selected' if previous and previous.state == state }}>{{ state }}</option>
+                    {% endfor %}
+                </select>
+            </label>
+        </section>
+
+        <section class="card card-pad">
+            <div class="step-head">
+                <span class="step-icon">{{ icon("payments", 22) }}</span>
+                <div><h2>2. Payment method</h2><p>You pay after placing the order</p></div>
+            </div>
+            <div class="option-cards option-cards-2">
+                <label class="option-card pay-option">
+                    <input type="radio" name="payment_method" value="upi" checked>
+                    <span class="step-icon">{{ icon("qr_code_2", 22) }}</span>
+                    <span class="option-body">
+                        <span class="option-title">UPI / GPay QR <span class="option-check">{{ icon("check_circle", 20) }}</span></span>
+                        <span class="option-text">Google Pay, PhonePe, Paytm, BHIM</span>
+                        <span class="option-foot">Scan the seller's QR and pay their UPI ID directly. The seller confirms your payment.</span>
+                    </span>
+                </label>
+                {% if razorpay_available %}
+                <label class="option-card pay-option">
+                    <input type="radio" name="payment_method" value="razorpay">
+                    <span class="step-icon">{{ icon("credit_card", 22) }}</span>
+                    <span class="option-body">
+                        <span class="option-title">Razorpay (test mode) <span class="option-check">{{ icon("check_circle", 20) }}</span></span>
+                        <span class="option-text">Card, UPI or netbanking</span>
+                        <span class="option-foot">Sandbox gateway for testing. No real money is charged. Confirmed automatically.</span>
+                    </span>
+                </label>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <aside class="shell-side">
+        <div class="card summary">
+            <div class="summary-head"><h2>Order summary</h2><span class="pill pill-mono">{{ cart.item_count }} item{{ '' if cart.item_count == 1 else 's' }}</span></div>
+
+            {% set sellers = cart.items | groupby("seller_username") %}
+            {% if sellers | length > 1 %}
+                <p class="small muted" style="margin-bottom:0.85rem">Your cart has items from {{ sellers | length }} sellers, so it becomes {{ sellers | length }} separate orders. You'll pay each seller separately.</p>
+            {% endif %}
+            {% for seller, items in sellers %}
+                <div class="seller-group">
+                    <div class="seller-heading"><span>Seller: {{ seller }}</span></div>
+                    {% for item in items %}
+                        <div class="sum-item">
+                            <img src="{{ item.image_url }}" alt="">
+                            <div class="txt">
+                                <div class="t">{{ item.name }}</div>
+                                <div class="s">Qty {{ item.quantity }} · {{ item.unit_price | inr }} each</div>
+                                <div class="p"><span>{{ item.line_total | inr }}</span></div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    {% if not items[0].seller_accepts_upi %}
+                        <p class="problem">This seller hasn't added a UPI ID, so pay for their items with Razorpay.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+
+            <div class="sum-lines">
+                <div><span>Item subtotal</span><b>{{ cart.subtotal | inr }}</b></div>
+                <div><span>Platform fee</span><b>₹0</b></div>
+            </div>
+            <div class="total-box">
+                <div><div class="t-overline">Total payable</div><div class="amount">{{ cart.total | inr }}</div></div>
+                <div class="right">Paid directly<br><b>to the seller{{ 's' if sellers | length > 1 else '' }}</b></div>
+            </div>
+            {# The total the buyer is agreeing to. The server refuses the order if it no longer matches. #}
+            <input type="hidden" name="expected_total" value="{{ cart.total }}">
+            <div class="notice" style="margin-bottom:1rem">
+                {{ icon("shield", 18) }}
+                <div>Stock is reserved once the order is placed. Nothing is charged automatically: you pay by scanning the QR next.</div>
+            </div>
+            <button class="btn btn-primary btn-lg btn-block" type="submit" {{ 'disabled' if not cart.can_checkout }}>Place order {{ icon("arrow_forward", 18) }}</button>
+        </div>
+    </aside>
+</form>
+{% endblock %}

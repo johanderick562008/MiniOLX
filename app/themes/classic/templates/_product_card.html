@@ -1,0 +1,9 @@
+<a class="product-card" href="/product/{{ product.id }}">
+    <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy">
+    <div class="product-card-body">
+        <h3>{{ product.name }}</h3>
+        <p class="price">{{ product.price | inr }}</p>
+        <p class="meta">{{ product.condition_label }} &middot; Seller: {{ product.seller.username }}</p>
+        <span class="view-link">View product</span>
+    </div>
+</a>

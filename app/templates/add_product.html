@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Sell an item · mini olx{% endblock %}
+{% block content %}
+<div class="sell-head">
+    <span class="eyebrow">{{ icon("verified", 16) }} Paid straight to your UPI</span>
+    <h1>Sell an item</h1>
+    <p>Give your unused things a second life with buyers nearby.</p>
+</div>
+
+<section class="card sell-card">
+    {% if not user.accepts_upi %}
+        <div class="setup-box">
+            <h2>First, tell buyers where to pay you</h2>
+            <p>Add your UPI ID so buyers can scan your QR code and pay you directly.</p>
+            <a class="btn btn-primary" href="/settings/payment?next=sell">{{ icon("account_balance_wallet", 18) }} Add UPI ID</a>
+        </div>
+    {% else %}
+        <div class="message" id="form-message" hidden></div>
+        <form id="product-form" data-url="/api/products" data-method="POST" novalidate>
+            {% include "_product_fields.html" %}
+            <div class="sell-foot">
+                <a class="btn btn-ghost" href="/dashboard">Cancel &amp; return</a>
+                <button class="btn btn-primary" type="submit">{{ icon("upload", 18) }} Publish listing</button>
+            </div>
+        </form>
+    {% endif %}
+</section>
+
+<div class="sell-perks">
+    <div>{{ icon("payments", 28) }}<b>Zero brokerage</b><span>Buyers pay your UPI ID directly. Nothing is deducted.</span></div>
+    <div>{{ icon("verified", 28) }}<b>You confirm payments</b><span>Orders become paid only after you find the money in your UPI app.</span></div>
+    <div>{{ icon("inventory_2", 28) }}<b>Stock handled for you</b><span>Sold-out items leave search automatically.</span></div>
+</div>
+{% endblock %}

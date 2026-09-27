@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · mini olx{% endblock %}
+{% block content %}
+<div class="dash-head">
+    <div class="who">
+        <span class="avatar avatar-lg">{{ user.username[:1] }}</span>
+        <div>
+            <h1>Hi, {{ user.name }}</h1>
+            <p class="muted">Manage your listings, sales and orders.</p>
+        </div>
+    </div>
+    <div class="actions">
+        <a class="btn btn-white" href="/seller/orders">{{ icon("storefront", 18) }} Sales{% if sales_pending %} ({{ sales_pending }} to verify){% endif %}</a>
+        <a class="btn btn-primary" href="/products/add">{{ icon("add_circle", 18) }} Sell an item</a>
+    </div>
+</div>
+
+<div class="dash-grid">
+    <div class="dash-col">
+        <section class="card card-pad">
+            <div class="card-title"><h2>Profile</h2></div>
+            <dl class="dl">
+                <dt>Username</dt><dd>{{ user.username }}</dd>
+                <dt>Email</dt><dd>{{ user.email }}</dd>
+                <dt>Member since</dt><dd>{{ user.created_at.strftime("%d %b %Y") }}</dd>
+                <dt>UPI ID</dt><dd>{% if user.upi_id %}{{ user.upi_id }} · <a href="/settings/payment">Edit</a>
+                    {% else %}<a href="/settings/payment">Add your UPI ID</a> to start selling{% endif %}</dd>
+                <dt>Sign-in</dt><dd>{% if user.uses_google and user.has_password %}Google or password
+                    {% elif user.uses_google %}Google{% else %}Username and password{% endif %}</dd>
+            </dl>
+        </section>
+    </div>
+
+    <div class="dash-col">
+        <section class="card card-pad">
+            <div class="card-title"><h2>My products</h2><span class="pill pill-grey">{{ my_products | length }}</span></div>
+            {% if my_products %}
+                <ul class="list-rows">
+                    {% for product in my_products %}
+                        <li>
+                            <img src="{{ product.image_url }}" alt="">
+                            <div style="min-width:0">
+                                <a class="name" href="/product/{{ product.id }}">{{ product.name }}</a>
+                                <span class="sub">{{ product.quantity ~ " in stock" if product.in_stock else "Sold out" }} · {{ product.condition_label }}</span>
+                            </div>
+                            <span class="price">{{ product.price | inr }}</span>
+                            <a class="btn btn-soft btn-sm" href="/products/{{ product.id }}/edit">{{ icon("edit", 16) }} Edit</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-inline">You haven't listed anything yet.</p>
+            {% endif %}
+        </section>
+
+        <section class="card card-pad">
+            <div class="card-title"><h2>My orders</h2><a class="small" href="/orders">All orders</a></div>
+            {% if recent_orders %}
+                <ul class="list-rows order-rows">
+                    {% for order in recent_orders %}
+                        <li>
+                            <a class="name" href="/orders/{{ order.id }}">{{ order.order_number }}</a>
+                            <span class="sub">{{ order.items | map(attribute="product_name") | join(", ") }}</span>
+                            <span class="price">{{ order.total_amount | inr }}</span>
+                            <span class="status status-{{ order.status }}">{{ order.status_label }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="empty-inline">You haven't bought anything yet.</p>
+            {% endif %}
+        </section>
+    </div>
+</div>
+{% endblock %}

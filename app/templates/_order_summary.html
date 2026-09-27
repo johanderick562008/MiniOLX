@@ -1,0 +1,33 @@
+{# Right-hand order summary on the payment page. #}
+<div class="card summary">
+    <div class="summary-head"><h2>Order summary</h2><span class="pill pill-mono">{{ order.order_number }}</span></div>
+    {% for item in order.items %}
+        <div class="sum-item">
+            {% if item.product %}<img src="{{ item.product.image_url }}" alt="">{% else %}<img alt="">{% endif %}
+            <div class="txt">
+                <div class="t">{{ item.product_name }}</div>
+                <div class="s">Qty {{ item.quantity }} · {{ item.price_at_purchase | inr }} each</div>
+                <div class="p"><span>{{ item.line_total | inr }}</span></div>
+            </div>
+        </div>
+    {% endfor %}
+    <div class="seller-row">
+        <span class="who"><span class="avatar">{{ order.seller.username[:1] }}</span>{{ order.seller.username }}</span>
+        <span>Seller</span>
+    </div>
+    <div class="sum-lines">
+        <div><span>Item subtotal</span><b>{{ order.total_amount | inr }}</b></div>
+        <div><span>Platform fee</span><b>₹0</b></div>
+    </div>
+    <div class="total-box" style="margin-bottom:0">
+        <div><div class="t-overline">Total payable</div><div class="amount">{{ order.total_amount | inr }}</div></div>
+        <div class="right">{{ "Razorpay test mode" if order.payment_method == "razorpay" else "UPI direct to seller" }}</div>
+    </div>
+</div>
+{% if order.status == "pending_payment" and (not payment or payment.status == "rejected") %}
+    <div class="notice">
+        {{ icon("shield", 18) }}
+        <div><strong>Your item is reserved</strong>Nothing is debited automatically. You can cancel this order from
+            <a href="/orders/{{ order.id }}">order details</a> until you submit a payment.</div>
+    </div>
+{% endif %}

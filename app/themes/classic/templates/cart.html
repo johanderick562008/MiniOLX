@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Cart · Mini OLX{% endblock %}
+{% block content %}
+<h1>Your cart</h1>
+<div class="message" id="cart-message" hidden></div>
+
+<div class="cart-layout" id="cart-layout" {% if not cart.items %}hidden{% endif %}>
+    <ul class="cart-items" id="cart-items">
+        {% for item in cart.items %}
+            {% include "_cart_row.html" %}
+        {% endfor %}
+    </ul>
+
+    <aside class="cart-summary">
+        <dl>
+            <dt>Items</dt><dd id="cart-item-count">{{ cart.item_count }}</dd>
+            <dt>Subtotal</dt><dd id="cart-subtotal">{{ cart.subtotal | inr }}</dd>
+            <dt class="total">Total</dt><dd class="total" id="cart-total">{{ cart.total | inr }}</dd>
+        </dl>
+        <p class="problem" id="cart-blocked" {% if cart.can_checkout %}hidden{% endif %}>Fix the items marked above to check out.</p>
+        <a class="btn btn-primary btn-block" id="checkout-btn" href="/checkout"
+           {% if not cart.can_checkout %}aria-disabled="true"{% endif %}>Proceed to checkout</a>
+    </aside>
+</div>
+
+<div class="empty" id="cart-empty" {% if cart.items %}hidden{% endif %}>
+    <p>Your cart is empty.</p>
+    <a class="btn btn-primary" href="/">Browse listings</a>
+</div>
+{% endblock %}

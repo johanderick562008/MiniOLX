@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ product.name }} · mini olx{% endblock %}
+{% block content %}
+<div class="sell-head">
+    <nav class="crumbs" aria-label="Breadcrumb" style="margin-bottom:0.75rem">
+        <a href="/dashboard">Dashboard</a> {{ icon("chevron_right", 16) }}
+        <a href="/product/{{ product.id }}">{{ product.name }}</a> {{ icon("chevron_right", 16) }}
+        <span class="current">Edit</span>
+    </nav>
+    <h1>Edit listing</h1>
+    <p>Set quantity to 0 to mark the item as sold out.</p>
+</div>
+
+<section class="card sell-card">
+    <div class="message" id="form-message" hidden></div>
+    <form id="product-form" data-url="/api/products/{{ product.id }}" data-method="PUT" novalidate>
+        {% include "_product_fields.html" %}
+        <div class="sell-foot">
+            <a class="btn btn-ghost" href="/product/{{ product.id }}">Cancel &amp; return</a>
+            <button class="btn btn-primary" type="submit">{{ icon("check_circle", 18) }} Save changes</button>
+        </div>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Sell an item · Mini OLX{% endblock %}
+{% block content %}
+<section class="form-card">
+    <h1>Sell an item</h1>
+    {% if not user.accepts_upi %}
+        <div class="setup-box">
+            <h2>First, tell buyers where to pay you</h2>
+            <p>Add your UPI ID so buyers can scan your QR code and pay you directly.</p>
+            <a class="btn btn-primary" href="/settings/payment?next=sell">Add UPI ID</a>
+        </div>
+    {% else %}
+    <p class="muted">Buyers will pay you at <strong>{{ user.upi_id }}</strong>.
+       <a href="/settings/payment">Change</a></p>
+    <div class="message" id="form-message" hidden></div>
+    <form id="product-form" data-url="/api/products" data-method="POST" novalidate>
+        {% include "_product_fields.html" %}
+        <button class="btn btn-primary btn-block" type="submit">Publish listing</button>
+    </form>
+    {% endif %}
+</section>
+{% endblock %}

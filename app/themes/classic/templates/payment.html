@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Pay for {{ order.order_number }} · Mini OLX{% endblock %}
+{% block content %}
+<section class="pay">
+    <div class="pay-head">
+        <h1>Pay for {{ order.order_number }}</h1>
+        <a href="/orders/{{ order.id }}">Order details</a>
+    </div>
+
+    <p class="demo-note">
+        {% if order.payment_method == "razorpay" %}
+            <strong>Learning/Demo Project:</strong> Razorpay runs in <strong>test mode</strong>. No real money is charged.
+        {% else %}
+            <strong>Learning/Demo Project:</strong> this is a manually verified UPI QR payment.
+            The website can't see your UPI app, so your payment is confirmed only after the seller checks it.
+        {% endif %}
+    </p>
+
+    {% if order.status == "cancelled" %}
+        <div class="panel pay-state">
+            <h2>This order was cancelled</h2>
+            <p class="muted">No payment is needed.</p>
+        </div>
+
+    {% elif order.status != "pending_payment" %}
+        <div class="panel pay-state">
+            <span class="status status-paid">Payment verified</span>
+            <h2>{{ order.total_amount | inr }} received</h2>
+            <p class="muted">Reference {{ payment.transaction_reference }}.
+               {{ "Confirmed automatically by Razorpay." if payment.payment_method == "razorpay" else "The seller confirmed this payment." }}</p>
+        </div>
+
+    {% elif order.payment_method == "razorpay" %}
+        <div class="panel pay-state">
+            <h2>{{ order.total_amount | inr }}</h2>
+            <p class="muted">Pay for {{ order.order_number }} with Razorpay. Your order is marked paid automatically.</p>
+            {% if razorpay_ready %}
+                <div class="message" id="form-message" hidden></div>
+                <button type="button" class="btn btn-primary" id="rzp-pay-btn" data-order-id="{{ order.id }}">
+                    Pay {{ order.total_amount | inr }} with Razorpay</button>
+                <p class="note test-hint">Test mode: choose <strong>UPI</strong> and enter <code>success@razorpay</code>
+                   (or <code>failure@razorpay</code> to see a failed payment). Netbanking shows Success/Failure buttons.</p>
+            {% else %}
+                <div class="message error">Razorpay isn't set up on this server. Add the test keys to .env and restart.</div>
+            {% endif %}
+        </div>
+
+    {% elif payment and payment.status == "pending" %}
+        <div class="panel pay-state">
+            <span class="status status-pending_payment">Pending verification</span>
+            <h2>Thanks, we've recorded your payment details</h2>
+            <p>The seller will check their UPI app for <strong>{{ payment.amount | inr }}</strong>
+               with reference <strong>{{ payment.transaction_reference }}</strong>.</p>
+            <p class="muted">Your order becomes <em>Paid</em> once the seller verifies it. Check back on
+               <a href="/orders">My orders</a>.</p>
+        </div>
+
+    {% else %}
+        {% if payment and payment.status == "rejected" %}
+            <div class="message error">
+                Your previous reference {{ payment.transaction_reference }} was rejected by the seller.
+                If you did pay, check the transaction ID in your UPI app and submit it again.
+            </div>
+        {% endif %}
+
+        {% if upi_id_is_placeholder %}
+            <div class="message error">
+                Setup needed: this older order has no seller UPI ID, and UPI_ID in .env is still the placeholder.
+            </div>
+        {% endif %}
+
+        <div class="pay-layout">
+            <div class="panel qr-panel">
+                <h2>Scan &amp; pay</h2>
+                {% if paying_seller %}<p class="meta pay-direct">You're paying the seller, {{ order.seller.username }}, directly.</p>{% endif %}
+                <img class="qr" src="{{ qr_data_uri }}" alt="UPI QR code for {{ order.total_amount | inr }}">
+                <dl class="pay-facts">
+                    <dt>UPI ID</dt><dd>{{ upi_id }}</dd>
+                    <dt>Pay to</dt><dd>{{ upi_name }}</dd>
+                    <dt>Amount</dt><dd class="price">{{ order.total_amount | inr }}</dd>
+                    <dt>Order ID</dt><dd>{{ order.order_number }}</dd>
+                </dl>
+                <a class="btn btn-quiet btn-block upi-link" href="{{ upi_link }}">Open UPI app (on phone)</a>
+            </div>
+
+            <div class="panel">
+                <h2>How to pay</h2>
+                <ol class="steps">
+                    <li>Open Google Pay, PhonePe or Paytm on another phone.</li>
+                    <li>Scan the QR code.</li>
+                    <li>Check the amount is <strong>{{ order.total_amount | inr }}</strong>.</li>
+                    <li>Complete the payment.</li>
+                    <li>Come back to this page.</li>
+                    <li>Enter the transaction ID / UTR shown in your UPI app.</li>
+                    <li>Click <strong>I Have Paid</strong>.</li>
+                </ol>
+
+                <div class="message" id="form-message" hidden></div>
+                <form id="payment-form" data-order-id="{{ order.id }}" novalidate>
+                    <label>Transaction ID / UTR
+                        <input name="transaction_reference" required maxlength="40" autocomplete="off"
+                               placeholder="e.g. 425612345678">
+                        <small>In Google Pay it's the "UPI transaction ID", in PhonePe the "UTR".</small>
+                    </label>
+                    <button class="btn btn-primary btn-block" type="submit">I Have Paid</button>
+                </form>
+            </div>
+        </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+    {% if order.payment_method == "razorpay" and order.status == "pending_payment" and razorpay_ready %}
+        {# Always load checkout.js from Razorpay's own server, never a copy. #}
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Edit {{ product.name }} · Mini OLX{% endblock %}
+{% block content %}
+<section class="form-card">
+    <h1>Edit listing</h1>
+    <p class="muted">Set quantity to 0 to mark the item as sold out.</p>
+    <div class="message" id="form-message" hidden></div>
+    <form id="product-form" data-url="/api/products/{{ product.id }}" data-method="PUT" novalidate>
+        {% include "_product_fields.html" %}
+        <button class="btn btn-primary btn-block" type="submit">Save changes</button>
+    </form>
+</section>
+{% endblock %}

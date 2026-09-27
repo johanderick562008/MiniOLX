@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} · mini olx{% endblock %}
+{% block content %}
+<section class="card empty" style="max-width:560px;margin:2rem auto">
+    <div class="empty-icon">{{ icon("error", 30) }}</div>
+    <h2>{{ title }}</h2>
+    <p>{{ message }}</p>
+    <a class="btn btn-primary" href="/">Back to listings</a>
+</section>
+{% endblock %}

@@ -1,0 +1,3 @@
+# Extra packages for running the automated tests (not needed to run the app).
+-r requirements.txt
+pytest>=8

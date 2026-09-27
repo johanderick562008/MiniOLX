@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} · mini olx{% endblock %}
+{% block content %}
+<nav class="crumbs" aria-label="Breadcrumb" style="margin-bottom:1.25rem">
+    <a href="/">Home</a> {{ icon("chevron_right", 16) }}
+    <a href="/?category={{ product.category }}">{{ product.category_label }}</a> {{ icon("chevron_right", 16) }}
+    <span class="current">{{ product.name }}</span>
+</nav>
+
+<div class="pdp">
+    <div class="pdp-main">
+        <div class="card gallery">
+            <div class="frame">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}">
+                <span class="pill pill-white">{{ product.condition_label }}</span>
+            </div>
+        </div>
+
+        <div class="card trust-row">
+            <div class="trust-item">
+                <span class="step-icon">{{ icon("qr_code_2", 20) }}</span>
+                <div><b>Pay the seller by UPI</b><span>Scan their QR; the money goes straight to their UPI ID.</span></div>
+            </div>
+            <div class="trust-item">
+                <span class="step-icon">{{ icon("verified", 20) }}</span>
+                <div><b>Seller confirms payment</b><span>Your order is marked paid only after they see it arrive.</span></div>
+            </div>
+            <div class="trust-item">
+                <span class="step-icon">{{ icon("inventory_2", 20) }}</span>
+                <div><b>Stock held for you</b><span>Placing the order reserves the item while you pay.</span></div>
+            </div>
+        </div>
+
+        <div class="card desc-card">
+            <div class="card-title" style="margin-bottom:0">
+                <h2>Item description</h2>
+                <span class="pill pill-mono">ID {{ product.id }}</span>
+            </div>
+            <p class="description">{{ product.description }}</p>
+            <dl class="spec-grid">
+                <div class="spec"><dt>Category</dt><dd>{{ product.category_label }}</dd></div>
+                <div class="spec"><dt>Condition</dt><dd>{{ product.condition_label }}</dd></div>
+                <div class="spec"><dt>Last updated</dt><dd>{{ product.updated_at.strftime("%d %b %Y") }}</dd></div>
+            </dl>
+        </div>
+
+        <div class="card seller-card">
+            <div class="who">
+                <span class="avatar avatar-lg">{{ product.seller.username[:1] }}</span>
+                <div>
+                    <h3>{{ product.seller.username }}</h3>
+                    <p>Member since {{ product.seller.created_at.strftime("%b %Y") }} · {{ seller_live_count }} live listing{{ '' if seller_live_count == 1 else 's' }}</p>
+                </div>
+            </div>
+            {% if product.seller.accepts_upi %}
+                <span class="pill pill-mint">{{ icon("check_circle", 14) }} Accepts UPI payments</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <aside class="pdp-side">
+        <div class="card buy-card">
+            <div class="tags">
+                <span class="pill pill-mint">{{ product.category_label }}</span>
+                <span class="pill pill-grey">{{ product.condition_label | upper }}</span>
+            </div>
+            <h1>{{ product.name }}</h1>
+            <p class="price-lg">{{ product.price | inr }}</p>
+            <p class="price-note">Pay the seller directly by UPI. No platform fees.</p>
+
+            <dl class="facts">
+                <div><dt>Condition</dt><dd>{{ product.condition_label }}</dd></div>
+                <div><dt>Available stock</dt><dd>{{ (product.quantity ~ (" unit" if product.quantity == 1 else " units")) if product.in_stock else "Sold out" }}</dd></div>
+                <div><dt>Listed on</dt><dd>{{ product.created_at.strftime("%d %b %Y") }}</dd></div>
+                <div><dt>Seller</dt><dd>{{ product.seller.username }}</dd></div>
+            </dl>
+
+            <div class="message" id="form-message" hidden></div>
+
+            {% if is_owner %}
+                <div class="owner-box">{{ icon("storefront", 20) }} This is your listing.</div>
+                <div class="buy-actions">
+                    <a class="btn btn-primary btn-lg" href="/products/{{ product.id }}/edit">{{ icon("edit", 18) }} Edit listing</a>
+                    <button type="button" class="btn btn-danger btn-lg" id="delete-product-btn"
+                            data-product-id="{{ product.id }}">{{ icon("delete", 18) }} Delete listing</button>
+                </div>
+            {% elif not user %}
+                <a class="btn btn-primary btn-lg btn-block" href="/login">{{ icon("login", 18) }} Log in to buy</a>
+                <p class="buy-foot">New here? <a href="/register">Create an account</a> or continue with Google.</p>
+            {% elif product.in_stock %}
+                <form id="add-to-cart-form" data-product-id="{{ product.id }}" novalidate>
+                    <div class="qty-row">
+                        <label for="qty">Quantity</label>
+                        <div class="stepper stepper-pill" data-stepper>
+                            <button type="button" data-step="-1" aria-label="Decrease quantity">{{ icon("remove", 18) }}</button>
+                            <input id="qty" name="quantity" type="number" min="1" max="{{ [product.quantity, 99] | min }}" step="1" value="1">
+                            <button type="button" data-step="1" aria-label="Increase quantity">{{ icon("add", 18) }}</button>
+                        </div>
+                    </div>
+                    <div class="buy-actions">
+                        <button type="submit" class="btn btn-primary btn-lg">{{ icon("add_shopping_cart", 20) }} Add to cart</button>
+                        <button type="button" class="btn btn-saffron btn-lg" id="buy-now-btn">{{ icon("bolt", 20) }} Buy now</button>
+                    </div>
+                </form>
+                <p class="buy-foot">Stock is reserved only when you place the order.</p>
+            {% else %}
+                <div class="owner-box" style="background:var(--surface-mid);color:var(--muted)">{{ icon("cancel", 20) }} This item is sold out.</div>
+            {% endif %}
+        </div>
+
+        {% if more_from_seller %}
+            <div class="card card-pad">
+                <div class="card-title"><h2>More from {{ product.seller.username }}</h2></div>
+                <div class="mini-list">
+                    {% for other in more_from_seller %}
+                        <a class="mini-item" href="/product/{{ other.id }}">
+                            <img src="{{ other.image_url }}" alt="">
+                            <div class="txt"><b>{{ other.name }}</b><span>{{ other.price | inr }}</span></div>
+                        </a>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

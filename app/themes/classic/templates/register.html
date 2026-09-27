@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Create account · Mini OLX{% endblock %}
+{% block content %}
+<section class="auth-card">
+    <h1>Create account</h1>
+    <div class="message" id="form-message" hidden></div>
+
+    {% include "_google_button.html" %}
+
+    <form id="register-form" novalidate>
+        <label>Full name
+            <input name="name" autocomplete="name" required maxlength="100">
+        </label>
+        <label>Email
+            <input name="email" type="email" autocomplete="email" required maxlength="255">
+        </label>
+        <label>Username
+            <input name="username" autocomplete="username" required pattern="[A-Za-z0-9_]{3,30}">
+            <small>3-30 letters, numbers or underscores.</small>
+        </label>
+        <label>Password
+            <input name="password" type="password" autocomplete="new-password" required minlength="8">
+            <small>At least 8 characters, with a letter and a number.</small>
+        </label>
+        <label>Confirm password
+            <input name="confirm_password" type="password" autocomplete="new-password" required>
+        </label>
+        <button class="btn btn-primary btn-block" type="submit">Create account</button>
+    </form>
+    <p class="auth-switch">Already have an account? <a href="/login">Log in</a></p>
+</section>
+{% endblock %}

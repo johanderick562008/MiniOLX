@@ -1,0 +1,12 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0
+pymysql>=1.1
+cryptography>=42      # needed by PyMySQL for MySQL 8's default login method
+python-dotenv>=1.0
+jinja2>=3.1
+bcrypt>=4.2           # password hashing
+email-validator>=2.1  # lets Pydantic validate email addresses
+python-multipart>=0.0.9  # lets FastAPI read form fields and file uploads
+segno>=1.6            # draws the UPI QR code (pure Python, no other dependencies)
+httpx>=0.27           # calls the Razorpay API

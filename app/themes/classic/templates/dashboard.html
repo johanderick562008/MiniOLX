@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Mini OLX{% endblock %}
+{% block content %}
+<section class="dashboard">
+    <h1>Hi, {{ user.name }}</h1>
+
+    <div class="panel">
+        <h2>Profile</h2>
+        <dl class="profile">
+            <dt>Username</dt><dd>{{ user.username }}</dd>
+            <dt>Email</dt><dd>{{ user.email }}</dd>
+            <dt>Member since</dt><dd>{{ user.created_at.strftime("%d %b %Y") }}</dd>
+            <dt>UPI ID</dt><dd>{% if user.upi_id %}{{ user.upi_id }} · <a href="/settings/payment">Edit</a>
+                {% else %}<a href="/settings/payment">Add your UPI ID</a> to start selling{% endif %}</dd>
+            <dt>Sign-in</dt><dd>{% if user.uses_google and user.has_password %}Google or password
+                {% elif user.uses_google %}Google{% else %}Username and password{% endif %}</dd>
+        </dl>
+    </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <h2>My products</h2>
+            <div class="actions">
+                <a class="btn btn-quiet" href="/seller/orders">Sales{% if sales_pending %} ({{ sales_pending }} to verify){% endif %}</a>
+                <a class="btn btn-quiet" href="/products/add">Sell an item</a>
+            </div>
+        </div>
+        {% if my_products %}
+            <ul class="my-products">
+                {% for product in my_products %}
+                    <li>
+                        <img src="{{ product.image_url }}" alt="">
+                        <a class="name" href="/product/{{ product.id }}">{{ product.name }}</a>
+                        <span class="price">{{ product.price | inr }}</span>
+                        <span class="stock">{{ product.quantity ~ " in stock" if product.in_stock else "Sold out" }}</span>
+                        <a href="/products/{{ product.id }}/edit">Edit</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="muted">You haven't listed anything yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="panel">
+        <div class="panel-head">
+            <h2>My orders</h2>
+            <a class="btn btn-quiet" href="/orders">All orders</a>
+        </div>
+        {% if recent_orders %}
+            <ul class="order-mini">
+                {% for order in recent_orders %}
+                    <li>
+                        <a class="name" href="/orders/{{ order.id }}">{{ order.order_number }}</a>
+                        <span>{{ order.items | map(attribute="product_name") | join(", ") }}</span>
+                        <span class="price">{{ order.total_amount | inr }}</span>
+                        <span class="status status-{{ order.status }}">{{ order.status_label }}</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="muted">You haven't bought anything yet.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

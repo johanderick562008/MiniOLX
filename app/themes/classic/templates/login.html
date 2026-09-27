@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Log in · Mini OLX{% endblock %}
+{% block content %}
+<section class="auth-card">
+    <h1>Log in</h1>
+    {% if registered %}
+        <div class="message success">Account created. Log in to continue.</div>
+    {% endif %}
+    {% if error %}
+        <div class="message error">{{ error }}</div>
+    {% endif %}
+    <div class="message" id="form-message" hidden></div>
+
+    {% include "_google_button.html" %}
+
+    <form id="login-form" novalidate>
+        <label>Username or email
+            <input name="identifier" autocomplete="username" required>
+        </label>
+        <label>Password
+            <input name="password" type="password" autocomplete="current-password" required>
+        </label>
+        <button class="btn btn-primary btn-block" type="submit">Log in</button>
+    </form>
+    <p class="auth-switch">New here? <a href="/register">Create an account</a></p>
+</section>
+{% endblock %}

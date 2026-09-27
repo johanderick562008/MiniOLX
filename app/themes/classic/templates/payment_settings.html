@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Payment settings · Mini OLX{% endblock %}
+{% block content %}
+<section class="form-card">
+    <h1>Payment settings</h1>
+    <p class="muted">When someone buys your item with UPI, the payment page shows this UPI ID and
+       a QR code for it, so the money goes straight to you.</p>
+
+    {% if next_url %}
+        <div class="message error">Add your UPI ID first, then you can list your item.</div>
+    {% endif %}
+    <div class="message" id="form-message" hidden></div>
+
+    <form id="upi-form" data-next="{{ next_url }}" novalidate>
+        <label>UPI ID
+            <input name="upi_id" required maxlength="100" autocomplete="off" spellcheck="false"
+                   placeholder="yourname@okaxis" value="{{ user.upi_id or '' }}">
+            <small>In Google Pay: tap your profile picture; it's shown under your name.</small>
+        </label>
+        <label>Name shown to buyers <span class="muted">(optional)</span>
+            <input name="upi_name" maxlength="100" placeholder="{{ user.name }}" value="{{ user.upi_name or '' }}">
+            <small>Leave empty to use your account name, {{ user.name }}.</small>
+        </label>
+        <button class="btn btn-primary btn-block" type="submit">Save UPI details</button>
+    </form>
+
+    <p class="note">Your UPI ID is shown only to buyers of your items, on their payment page.
+       Some UPI IDs contain a phone number (like 98765…@ybl); if you'd rather not share yours,
+       use a name-based UPI ID from your app.</p>
+</section>
+{% endblock %}

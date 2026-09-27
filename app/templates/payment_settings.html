@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Payment settings · mini olx{% endblock %}
+{% block content %}
+<div class="sell-head">
+    <span class="eyebrow">{{ icon("account_balance_wallet", 16) }} Payment settings</span>
+    <h1>Where buyers pay you</h1>
+    <p>When someone buys your item with UPI, their payment page shows this UPI ID and a QR code for it, so the money goes straight to you.</p>
+</div>
+
+<section class="card sell-card">
+    {% if next_url %}
+        <div class="message error">{{ icon("info", 18) }} Add your UPI ID first, then you can list your item.</div>
+    {% endif %}
+    <div class="message" id="form-message" hidden></div>
+
+    <form id="upi-form" data-next="{{ next_url }}" novalidate>
+        <label class="field">
+            <span class="field-label">UPI ID</span>
+            <span class="affix"><span class="affix-text">{{ icon("qr_code_2", 18) }}</span>
+                <input name="upi_id" required maxlength="100" autocomplete="off" spellcheck="false"
+                       placeholder="yourname@okaxis" value="{{ user.upi_id or '' }}"
+                       style="padding:12px 16px 12px 10px;width:100%;font:inherit"></span>
+            <span class="field-help">{{ icon("info", 14) }} In Google Pay, tap your profile picture; it's shown under your name.</span>
+        </label>
+        <label class="field">
+            <span class="field-label">Name shown to buyers <span class="hint">Optional</span></span>
+            <input name="upi_name" maxlength="100" placeholder="{{ user.name }}" value="{{ user.upi_name or '' }}">
+            <span class="field-help">Leave empty to use your account name, {{ user.name }}.</span>
+        </label>
+        <div class="notice" style="margin-bottom:1.25rem">
+            {{ icon("shield", 18) }}
+            <div>Your UPI ID is shown only to buyers of your items, on their payment page. Some UPI IDs contain a phone
+                number (like 98765…@ybl); if you'd rather not share yours, use a name-based UPI ID from your app.</div>
+        </div>
+        <button class="btn btn-primary btn-lg btn-block" type="submit">Save UPI details</button>
+    </form>
+</section>
+{% endblock %}

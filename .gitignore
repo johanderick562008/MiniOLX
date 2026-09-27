@@ -1,0 +1,25 @@
+# Secrets: never commit
+.env
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Uploaded product photos (user data), keep the empty folder
+app/uploads/products/*
+!app/uploads/products/.gitkeep
+
+# Local databases and logs
+*.db
+*.sqlite3
+*.log
+
+# Editors and OS files
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+.DS_Store

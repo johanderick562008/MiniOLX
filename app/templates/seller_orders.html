@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Sales · mini olx{% endblock %}
+{% block content %}
+<h1 class="page-title">Sales</h1>
+<p class="page-sub">Orders for your items. Verify each payment only after you find it in your UPI app.</p>
+
+<nav class="tabs" aria-label="Filter sales">
+    <a href="/seller/orders?show=pending" {% if show == "pending" %}aria-current="page"{% endif %}>
+        Needs verification{% if sales_pending %} ({{ sales_pending }}){% endif %}</a>
+    <a href="/seller/orders?show=all" {% if show != "pending" %}aria-current="page"{% endif %}>All sales</a>
+</nav>
+
+<div class="message" id="form-message" hidden></div>
+
+{% if orders %}
+<ul class="order-list" id="seller-orders" style="list-style:none;margin:0;padding:0">
+    {% for order in orders %}
+    {% set payment = order.latest_payment %}
+    <li class="card order-card">
+        <div class="order-card-head">
+            <div>
+                <span class="order-number">{{ order.order_number }}</span>
+                <p class="small muted">{{ order.created_at.strftime("%d %b %Y, %I:%M %p") }} UTC · Buyer: {{ order.buyer.username }}</p>
+            </div>
+            <span class="status status-{{ order.status }}">{{ order.status_label }}</span>
+        </div>
+
+        <ul class="order-lines">
+            {% for item in order.items %}
+                <li><span>{{ item.product_name }} × {{ item.quantity }}</span><span>{{ item.line_total | inr }}</span></li>
+            {% endfor %}
+        </ul>
+
+        <dl class="status-pairs">
+            <div><dt>Amount</dt><dd class="order-total" style="font-size:16px">{{ order.total_amount | inr }}</dd></div>
+            <div><dt>Transaction ref.</dt><dd>{{ payment.transaction_reference if payment else "—" }}</dd></div>
+            <div><dt>Payment</dt><dd>{{ order.payment_status_label }}{{ " (Razorpay)" if order.payment_method == "razorpay" else "" }}</dd></div>
+        </dl>
+
+        {% if payment and payment.status == "pending" %}
+            <div class="verify-box">
+                <p>Open <strong>your</strong> UPI app{% if order.payee_upi_id %} ({{ order.payee_upi_id }}){% endif %}
+                   and look for <strong>{{ payment.amount | inr }}</strong>
+                   with reference <strong>{{ payment.transaction_reference }}</strong>. Verify only if that money has arrived.</p>
+                <div class="actions">
+                    <button type="button" class="btn btn-primary" data-action="verify"
+                            data-payment-id="{{ payment.id }}" data-amount="{{ payment.amount | inr }}"
+                            data-reference="{{ payment.transaction_reference }}">{{ icon("task_alt", 18) }} Verify payment</button>
+                    <button type="button" class="btn btn-danger" data-action="reject"
+                            data-payment-id="{{ payment.id }}">Reject payment</button>
+                </div>
+            </div>
+        {% elif order.status == "paid" %}
+            <div class="actions" style="margin-top:1rem"><button type="button" class="btn btn-outline btn-sm" data-action="status"
+                data-order-id="{{ order.id }}" data-status="processing">{{ icon("package_2", 18) }} Mark as processing</button></div>
+        {% elif order.status == "processing" %}
+            <div class="actions" style="margin-top:1rem"><button type="button" class="btn btn-outline btn-sm" data-action="status"
+                data-order-id="{{ order.id }}" data-status="completed">{{ icon("task_alt", 18) }} Mark as completed</button></div>
+        {% endif %}
+
+        {# The buyer's address and phone are shown only after the money is verified. #}
+        {% if order.status in ("paid", "processing", "completed") %}
+            <details class="fold" open>
+                <summary>{{ icon("local_shipping", 18) }} Deliver to {{ icon("keyboard_arrow_down", 18) }}</summary>
+                <p class="address">{{ order.shipping_name }}<br>{{ order.address }}<br>
+                   {{ order.city }}, {{ order.state }} {{ order.pincode }}<br>Phone: +91 {{ order.phone }}</p>
+            </details>
+        {% endif %}
+
+        {% if order.payments | length > 1 %}
+            <details class="fold">
+                <summary>{{ icon("receipt_long", 18) }} Payment history ({{ order.payments | length }} attempts) {{ icon("keyboard_arrow_down", 18) }}</summary>
+                <ul class="order-lines" style="border:0;padding:0">
+                    {% for p in order.payments %}
+                        <li><span>{{ p.transaction_reference }}</span><span class="status status-{{ p.status }}">{{ p.status_label }}</span></li>
+                    {% endfor %}
+                </ul>
+            </details>
+        {% endif %}
+    </li>
+    {% endfor %}
+</ul>
+{% else %}
+    <div class="card empty">
+        <div class="empty-icon">{{ icon("storefront", 30) }}</div>
+        {% if show == "pending" %}
+            <h2>No payments waiting for verification</h2>
+            <p>New UPI payments from buyers appear here.</p>
+            <a class="btn btn-white" href="/seller/orders?show=all">See all sales</a>
+        {% else %}
+            <h2>Nobody has bought your items yet</h2>
+            <p>List more items to reach more buyers.</p>
+            <a class="btn btn-primary" href="/products/add">Sell an item</a>
+        {% endif %}
+    </div>
+{% endif %}
+{% endblock %}

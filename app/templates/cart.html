@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Cart · mini olx{% endblock %}
+{% block content %}
+<h1 class="page-title">Your cart</h1>
+<p class="page-sub">Prices are the sellers' current prices. They're locked in when you place the order.</p>
+<div class="message" id="cart-message" hidden></div>
+
+<div class="shell" id="cart-layout" {% if not cart.items %}hidden{% endif %}>
+    <div class="shell-main">
+        <div class="card">
+            <ul class="cart-items" id="cart-items">
+                {% for item in cart.items %}
+                    {% include "_cart_row.html" %}
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="notice">
+            {{ icon("info", 20) }}
+            <div><strong>You pay each seller directly</strong>
+                Items from different sellers become separate orders, each with the seller's own UPI QR code.</div>
+        </div>
+    </div>
+
+    <aside class="shell-side">
+        <div class="card summary">
+            <div class="summary-head"><h2>Order summary</h2></div>
+            <div class="sum-lines">
+                <div><span>Items</span><b id="cart-item-count">{{ cart.item_count }}</b></div>
+                <div><span>Subtotal</span><b id="cart-subtotal">{{ cart.subtotal | inr }}</b></div>
+                <div><span>Platform fee</span><b>₹0</b></div>
+            </div>
+            <div class="total-box">
+                <div><div class="t-overline">Total</div><div class="amount" id="cart-total">{{ cart.total | inr }}</div></div>
+                <div class="right">Paid directly<br>to sellers</div>
+            </div>
+            <p class="problem" id="cart-blocked" {% if cart.can_checkout %}hidden{% endif %} style="margin:0 0 0.85rem">Fix the items marked in red to check out.</p>
+            <a class="btn btn-primary btn-lg btn-block" id="checkout-btn" href="/checkout"
+               {% if not cart.can_checkout %}aria-disabled="true"{% endif %}>Proceed to checkout {{ icon("arrow_forward", 18) }}</a>
+            <p class="buy-foot">Stock is reserved when you place the order.</p>
+        </div>
+    </aside>
+</div>
+
+<div class="card empty" id="cart-empty" {% if cart.items %}hidden{% endif %}>
+    <div class="empty-icon">{{ icon("shopping_bag", 30) }}</div>
+    <h2>Your cart is empty</h2>
+    <p>Find something you like and add it here.</p>
+    <a class="btn btn-primary" href="/">Browse listings</a>
+</div>
+{% endblock %}

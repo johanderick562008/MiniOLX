@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+    <div>
+        <span class="hero-kicker">{{ icon("check_circle", 16) }}
+            {% if stats.listings %}{{ stats.listings }} live listing{{ '' if stats.listings == 1 else 's' }} from {{ stats.sellers }} seller{{ '' if stats.sellers == 1 else 's' }}
+            {% else %}Be the first to list something{% endif %}</span>
+        <h1>Buy and sell used stuff with people nearby.</h1>
+        <p class="lead">Find useful things at honest prices, or give your unused stuff a second life.
+            Pay sellers directly by UPI, with no middleman taking a cut.</p>
+        <div class="hero-actions">
+            <a class="btn btn-primary" href="#listings">{{ icon("search", 18) }} Browse listings</a>
+            <a class="btn btn-white" href="{{ '/products/add' if user else '/register' }}">{{ icon("add_circle", 18) }} Sell an item</a>
+        </div>
+        <div class="hero-trust">
+            <span>{{ icon("verified", 16) }} Seller-verified UPI payments</span>
+            <span>{{ icon("currency_rupee", 16) }} Zero platform commission</span>
+            <span>{{ icon("inventory_2", 16) }} Stock reserved at checkout</span>
+        </div>
+    </div>
+
+    <aside class="card hero-card" aria-label="Marketplace right now">
+        <div class="hero-card-head">
+            <span class="title">mini olx market</span>
+            <span>Live now</span>
+        </div>
+        <svg class="hero-emblem" viewBox="0 0 420 170" role="img" aria-label="Decorative emblem">
+            <g fill="none" stroke-width="1.2">
+                <path d="M40 150 L210 30 L380 150 Z" stroke="#aaf1d9"/>
+                <path d="M80 150 L210 62 L340 150" stroke="#f2dc9b"/>
+                <path d="M120 150 L210 94 L300 150" stroke="#bfc9c3" stroke-dasharray="3 5"/>
+                <line x1="40" y1="150" x2="380" y2="150" stroke="#e0e2ed"/>
+                <line x1="210" y1="30" x2="210" y2="150" stroke="#e0e2ed" stroke-dasharray="2 6"/>
+            </g>
+            <rect x="192" y="76" width="36" height="36" rx="6" transform="rotate(45 210 94)" fill="#fff" stroke="#0f5e4c" stroke-width="2"/>
+            <circle cx="210" cy="94" r="7" fill="#0f5e4c"/>
+            <circle cx="210" cy="30" r="4" fill="#181b24"/>
+            <circle cx="80" cy="150" r="4" fill="#8a5a00"/>
+            <circle cx="340" cy="150" r="4" fill="#8a5a00"/>
+            <circle cx="40" cy="150" r="3" fill="#0f5e4c"/>
+            <circle cx="380" cy="150" r="3" fill="#0f5e4c"/>
+        </svg>
+        <div class="hero-stats">
+            <span><i class="d-saffron"></i> {{ stats.listings }} listing{{ '' if stats.listings == 1 else 's' }} live</span>
+            <span><i class="d-green"></i> {% if stats.newest %}Newest {{ stats.newest | ago }}{% else %}Waiting for listings{% endif %}</span>
+        </div>
+    </aside>
+</section>
+
+{# A normal GET form: works without JavaScript, and every search has a
+   shareable URL like /?search=keyboard&max_price=3000. script.js upgrades
+   it to live results using the JSON API. #}
+<form id="filter-form" class="card filters" action="/" method="get" role="search" aria-label="Filter listings">
+    <div class="filters-top">
+        <label class="filters-search">
+            {{ icon("search") }}
+            <span class="sr-only">Search</span>
+            <input type="search" name="search" maxlength="100"
+                   placeholder="Search products (e.g. keyboard, monitor, headphones)…" value="{{ filters.search or '' }}">
+        </label>
+        <div class="price-range">
+            <label class="affix"><span class="affix-text">₹</span><span class="sr-only">Minimum price</span>
+                <input name="min_price" type="number" min="0" step="1" placeholder="Min"
+                       value="{{ filters.min_price | int if filters.min_price is not none else '' }}"></label>
+            <span aria-hidden="true">–</span>
+            <label class="affix"><span class="affix-text">₹</span><span class="sr-only">Maximum price</span>
+                <input name="max_price" type="number" min="0" step="1" placeholder="Max"
+                       value="{{ filters.max_price | int if filters.max_price is not none else '' }}"></label>
+        </div>
+        <label class="sort-select">
+            {{ icon("tune", 18) }}
+            <span class="sr-only">Sort</span>
+            <select name="sort">
+                {% for value, label in sort_labels.items() %}
+                    <option value="{{ value }}" {{ 'selected' if filters.sort and filters.sort.value == value }}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </div>
+
+    <div class="filters-chips">
+        <div class="chip-group" role="radiogroup" aria-label="Category">
+            <span class="t-overline">Category:</span>
+            <label class="chip chip-radio"><input type="radio" name="category" value="" {{ 'checked' if not filters.category }}>All</label>
+            {% for value, label in CATEGORY_LABELS.items() %}
+                <label class="chip chip-radio"><input type="radio" name="category" value="{{ value }}"
+                    {{ 'checked' if filters.category and filters.category.value == value }}>{{ label }}</label>
+            {% endfor %}
+        </div>
+        <div class="chip-group chip-group-compact" role="radiogroup" aria-label="Condition">
+            <span class="t-overline">Condition:</span>
+            <label class="chip chip-radio"><input type="radio" name="condition" value="" {{ 'checked' if not filters.condition }}>Any</label>
+            {% for value, label in CONDITION_LABELS.items() %}
+                <label class="chip chip-radio"><input type="radio" name="condition" value="{{ value }}"
+                    {{ 'checked' if filters.condition and filters.condition.value == value }}>{{ label }}</label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="filters-foot">
+        <p class="result-count" id="result-count">{{ icon("filter_alt", 16) }}
+            <span>{{ products | length }} item{{ '' if products | length == 1 else 's' }}{{ ' found' if filters.is_active else '' }}</span></p>
+        <div class="actions">
+            <a class="btn btn-ghost btn-sm" href="/">Clear</a>
+            <button class="btn btn-primary btn-sm" type="submit">Search</button>
+        </div>
+    </div>
+</form>
+
+<div class="message error" id="filter-message" {% if not filter_error %}hidden{% endif %}>{{ filter_error or '' }}</div>
+
+<div class="section-head" id="listings">
+    <div>
+        <h2>Fresh listings</h2>
+        <p>In-stock items from sellers who take UPI payments</p>
+    </div>
+    <span class="live-label"><i class="live-dot"></i> Live results</span>
+</div>
+
+<div class="product-grid" id="product-grid">
+    {% for product in products %}
+        {% include "_product_card.html" %}
+    {% endfor %}
+</div>
+
+<div class="card empty" id="empty-state" {% if products %}hidden{% endif %}>
+    <div class="empty-icon">{{ icon("storefront", 30) }}</div>
+    {% if filters.is_active %}
+        <h2>No items match these filters.</h2>
+        <p>Try a wider price range or another category.</p>
+        <a class="btn btn-white" href="/">Clear filters</a>
+    {% else %}
+        <h2>Nothing is listed yet.</h2>
+        <p>Be the first: list something you no longer use.</p>
+        <a class="btn btn-primary" href="{{ '/products/add' if user else '/register' }}">List the first item</a>
+    {% endif %}
+</div>
+
+<section class="card how" aria-labelledby="how-title">
+    <div>
+        <span class="pill pill-mint">{{ icon("handshake", 14) }} Peer-to-peer, no middleman</span>
+        <h2 id="how-title">Pay the seller directly, with every payment checked</h2>
+        <p class="lead">Buyers scan the seller's own UPI QR code, so the money goes straight to them.
+            Orders are marked paid only after the seller finds that payment in their UPI app.</p>
+        <div class="how-steps">
+            <div class="how-step"><b>₹0</b><span>Platform fees</span></div>
+            <div class="how-step"><b>1 QR</b><span>Per seller, amount pre-filled</span></div>
+            <div class="how-step"><b>100%</b><span>Goes to the seller</span></div>
+        </div>
+    </div>
+    <div class="how-visual" aria-label="How a purchase works">
+        <div class="flow-row"><span class="step-icon">{{ icon("sell", 20) }}</span><div><b>1. Seller lists an item</b><span>with their own UPI ID</span></div></div>
+        <div class="flow-row"><span class="step-icon">{{ icon("qr_code_2", 20) }}</span><div><b>2. Buyer scans &amp; pays</b><span>then enters the UPI reference</span></div></div>
+        <div class="flow-row"><span class="step-icon">{{ icon("task_alt", 20) }}</span><div><b>3. Seller verifies</b><span>order becomes Paid</span></div></div>
+    </div>
+</section>
+{% endblock %}

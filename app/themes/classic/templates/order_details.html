@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ order.order_number }} · Mini OLX{% endblock %}
+{% block content %}
+<section class="order-detail">
+    {% if placed %}
+        <div class="message success">Order placed. Pay for it to complete your purchase.</div>
+    {% endif %}
+    <div class="message" id="form-message" hidden></div>
+
+    <div class="order-detail-head">
+        <h1>{{ order.order_number }}</h1>
+        <span class="status status-{{ order.status }}">{{ order.status_label }}</span>
+    </div>
+    <p class="meta">Placed {{ order.created_at.strftime("%d %b %Y, %I:%M %p") }} UTC · Seller: {{ order.seller.username }}</p>
+
+    <div class="panel">
+        <h2>Items</h2>
+        <table class="summary-table">
+            <thead><tr><th>Product</th><th>Quantity</th><th>Price paid</th><th>Subtotal</th></tr></thead>
+            <tbody>
+                {% for item in order.items %}
+                    <tr>
+                        <td>
+                            {% if item.product_id %}<a href="/product/{{ item.product_id }}">{{ item.product_name }}</a>
+                            {% else %}{{ item.product_name }} <span class="meta">(listing removed)</span>{% endif %}
+                        </td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.price_at_purchase | inr }}</td>
+                        <td>{{ item.line_total | inr }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot><tr><td colspan="3">Total</td><td>{{ order.total_amount | inr }}</td></tr></tfoot>
+        </table>
+    </div>
+
+    <div class="panel">
+        <h2>Delivery to</h2>
+        <p class="address">
+            {{ order.shipping_name }}<br>
+            {{ order.address }}<br>
+            {{ order.city }}, {{ order.state }} {{ order.pincode }}<br>
+            Phone: {{ order.phone }}
+        </p>
+    </div>
+
+    <div class="panel">
+        <h2>Payment</h2>
+        {% set payment = order.latest_payment %}
+        <dl class="status-row">
+            <dt>Method</dt><dd>{{ "Razorpay (test mode)" if order.payment_method == "razorpay" else "UPI / GPay QR" }}</dd>
+            <dt>Status</dt><dd>{{ order.payment_status_label }}</dd>
+            {% if payment %}<dt>Reference</dt><dd>{{ payment.transaction_reference }}</dd>{% endif %}
+        </dl>
+        {% if order.status == "pending_payment" %}
+            <div class="actions pay-actions">
+                {% if not payment or payment.status == "rejected" %}
+                    <a class="btn btn-primary" href="/payment/{{ order.id }}">Pay {{ order.total_amount | inr }}</a>
+                    <button type="button" class="btn btn-danger" id="cancel-order-btn" data-order-id="{{ order.id }}">Cancel order</button>
+                {% else %}
+                    <a class="btn btn-quiet" href="/payment/{{ order.id }}">View payment</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

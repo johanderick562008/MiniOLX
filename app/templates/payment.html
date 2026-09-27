@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}Pay for {{ order.order_number }} · mini olx{% endblock %}
+{% block content %}
+<div class="page-bar">
+    <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/orders">{{ icon("arrow_back", 16) }} Orders</a> <span>/</span>
+        <a href="/orders/{{ order.id }}">{{ order.order_number }}</a> <span>/</span>
+        <span class="current">Payment</span>
+    </nav>
+    <span class="pill pill-grey">{{ icon("lock", 14) }} {{ "Razorpay test mode" if order.payment_method == "razorpay" else "Manual UPI, verified by the seller" }}</span>
+</div>
+
+<div class="shell">
+    <div class="shell-main">
+        <section class="card card-pad">
+            <div class="notice">
+                {{ icon("warning", 20) }}
+                <div>
+                    {% if order.payment_method == "razorpay" %}
+                        <strong>Learning/Demo Project: Razorpay test mode</strong>
+                        No real money is charged. Use Razorpay's test payment details in the payment window.
+                    {% else %}
+                        <strong>Important: how this payment works</strong>
+                        Learning/Demo Project: payments are handled using a manually verified UPI QR workflow. This website
+                        does not automatically verify external UPI transactions. Always copy the genuine 12-digit UTR from
+                        your UPI app.
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if order.status == "cancelled" %}
+                <div class="state-card off" style="margin-top:1.25rem">
+                    <span class="state-icon">{{ icon("cancel", 24) }}</span>
+                    <div><h3>This order was cancelled</h3><p>No payment is needed. The item went back on sale.</p></div>
+                </div>
+
+            {% elif order.status != "pending_payment" %}
+                <div class="state-card done" style="margin-top:1.25rem">
+                    <span class="state-icon">{{ icon("task_alt", 24) }}</span>
+                    <div>
+                        <h3>Payment verified <span class="status status-verified">{{ order.total_amount | inr }} received</span></h3>
+                        <p>Reference <code>{{ payment.transaction_reference }}</code>.
+                            {{ "Confirmed automatically by Razorpay." if payment.payment_method == "razorpay" else "The seller confirmed this payment in their UPI app." }}</p>
+                        <div class="state-meta"><a href="/orders/{{ order.id }}">{{ icon("receipt_long", 16) }} View order</a></div>
+                    </div>
+                </div>
+
+            {% elif order.payment_method == "razorpay" %}
+                <div class="pay-head">
+                    <div><h2>Pay {{ order.total_amount | inr }} <small>({{ order.order_number }})</small></h2>
+                        <p>Card, UPI or netbanking through Razorpay. Your order is marked paid automatically.</p></div>
+                </div>
+                <div class="rzp-box">
+                    <div class="amount">{{ order.total_amount | inr }}</div>
+                    {% if razorpay_ready %}
+                        <div class="message" id="form-message" hidden></div>
+                        <button type="button" class="btn btn-primary btn-lg" id="rzp-pay-btn" data-order-id="{{ order.id }}">
+                            {{ icon("credit_card", 20) }} Pay {{ order.total_amount | inr }} with Razorpay</button>
+                        <p class="note">Test mode: choose <strong>UPI</strong> and enter <code>success@razorpay</code>
+                            (or <code>failure@razorpay</code> to see a failed payment). Netbanking shows Success/Failure buttons.</p>
+                    {% else %}
+                        <div class="message error" style="margin-top:1rem">Razorpay isn't set up on this server. Add the test keys to .env and restart.</div>
+                    {% endif %}
+                </div>
+
+            {% elif payment and payment.status == "pending" %}
+                <div class="state-card pending" style="margin-top:1.25rem">
+                    <span class="state-icon">{{ icon("hourglass_top", 24) }}</span>
+                    <div>
+                        <h3>Payment pending seller review <span class="status status-pending">Pending verification</span></h3>
+                        <p>We've recorded your payment reference <code>UTR: {{ payment.transaction_reference }}</code>. The seller
+                            (<strong>{{ order.seller.username }}</strong>) will check their UPI app for <strong>{{ payment.amount | inr }}</strong>.
+                            Your order becomes <em>Paid</em> once they verify it.</p>
+                        <div class="state-meta">
+                            <span>{{ icon("schedule", 16) }} Submitted {{ payment.created_at | ago }}</span>
+                            <a href="/orders">{{ icon("receipt_long", 16) }} Track in My orders</a>
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                {% if payment and payment.status == "rejected" %}
+                    <div class="message error" style="margin-top:1.25rem">{{ icon("error", 18) }}
+                        <span>Your previous reference {{ payment.transaction_reference }} was rejected by the seller.
+                        If you did pay, check the transaction ID in your UPI app and submit it again.</span></div>
+                {% endif %}
+                {% if upi_id_is_placeholder %}
+                    <div class="message error" style="margin-top:1.25rem">Setup needed: this older order has no seller UPI ID, and UPI_ID in .env is still the placeholder.</div>
+                {% endif %}
+
+                <div class="pay-head">
+                    <div>
+                        <h2>Scan &amp; Pay {{ order.total_amount | inr }} <small>({{ order.order_number }})</small></h2>
+                        {% if paying_seller %}<p>You're paying the seller, {{ order.seller.username }}, directly.</p>{% endif %}
+                    </div>
+                    <span class="pill pill-mint"><i class="live-dot"></i> Amount pre-filled in the QR</span>
+                </div>
+
+                <div class="pay-panel">
+                    <div class="qr-card">
+                        <img src="{{ qr_data_uri }}" alt="UPI QR code for {{ order.total_amount | inr }} to {{ upi_id }}">
+                        <span class="pay-to">Pay to: {{ upi_name }}</span>
+                        <div class="upi-id">{{ upi_id }}
+                            <button type="button" class="copy-btn" data-copy="{{ upi_id }}" aria-label="Copy UPI ID">{{ icon("content_copy", 16) }}</button>
+                        </div>
+                        <a class="btn btn-white btn-sm btn-block upi-link" href="{{ upi_link }}">Open UPI app</a>
+                    </div>
+                    <div>
+                        <p class="t-overline">How to complete payment</p>
+                        <ol class="steps-list">
+                            <li><span>Open your UPI app (<strong>GPay, PhonePe, Paytm or BHIM</strong>) on another phone.</span></li>
+                            <li><span>Scan the QR code, or send money to <code>{{ upi_id }}</code>.</span></li>
+                            <li><span>Confirm the exact amount: <strong>{{ order.total_amount | inr }}</strong>.</span></li>
+                            <li><span>Copy the <strong>12-digit UTR</strong> or transaction ID from the success screen.</span></li>
+                            <li><span>Paste it below and click <strong>"I Have Paid"</strong>.</span></li>
+                        </ol>
+                        <p class="pay-note">{{ icon("info", 16) }} The note {{ order.order_number }} is pre-filled so the seller can match your payment.</p>
+                    </div>
+                </div>
+
+                <div class="message" id="form-message" hidden style="margin-top:1rem"></div>
+                <form id="payment-form" data-order-id="{{ order.id }}" novalidate>
+                    <label class="ref-label" for="ref">Transaction ID / UTR <span>Found in your UPI app or bank SMS</span></label>
+                    <div class="ref-row">
+                        <span class="affix"><span class="affix-text">#</span>
+                            <input id="ref" name="transaction_reference" required maxlength="40" autocomplete="off"
+                                   inputmode="text" placeholder="425612345678"></span>
+                        <button class="btn btn-primary btn-lg" type="submit">{{ icon("check_circle", 20) }} I Have Paid</button>
+                    </div>
+                    <p class="field-help">{{ icon("lock", 14) }} Submitting marks this payment as "Pending verification" for the seller.</p>
+                </form>
+            {% endif %}
+        </section>
+    </div>
+
+    <aside class="shell-side">
+        {% include "_order_summary.html" %}
+    </aside>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    {% if order.payment_method == "razorpay" and order.status == "pending_payment" and razorpay_ready %}
+        {# Always load checkout.js from Razorpay's own server, never a copy. #}
+        <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    {% endif %}
+{% endblock %}
